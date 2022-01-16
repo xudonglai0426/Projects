@@ -1,0 +1,155 @@
+---
+title: "5205project"
+author: "Donglai Xu"
+date: "12/4/2021"
+output: word_document
+---
+# Read Life dataset
+```{r}
+life<-read.csv("Life Expectancy Data.csv")
+df<-life[,-c(1,2)]
+
+df<-na.omit(df)# remove NA
+
+fullstart<-lm(df1$Life.expectancy~.,data=df1)
+plot(fullstart)
+levels(df1$Status) <- c(1,0)
+# Change catagorical variable into dummy variables.
+
+df2<-na.omit(df1[-c(2299,2300,2306),])
+# Remove outliers
+```
+
+```{r}
+
+sampleindex<-sample(nrow(df2),0.75*nrow(df2))
+dftrain<-df2[sampleindex,] # 75% of datasets
+dftest<-df2[-sampleindex,] # 25% of datasets
+
+```
+
+```{r}
+str(life)
+```
+
+# remove outliers 
+```{r}
+full1<-lm(df2$Life.expectancy~.,data=df2)
+plot(full1)
+```
+
+# BP test
+```{r}
+library(lmtest)
+bptest(full1,studentize=FALSE)
+qchisq(0.99, 19)
+```
+
+```{r}
+null<-lm(dftrain$Life.expectancy~1,data=dftrain)
+full<-lm(dftrain$Life.expectancy~.,data=dftrain)
+```
+
+```{r}
+library(olsrr)
+ols_step_forward_aic(full, details = TRUE)
+```
+
+```{r}
+ols_step_backward_aic(full, details = TRUE)
+```
+
+```{r}
+ols_step_both_aic(full, details=T)
+```
+
+```{r}
+modelbackward<-lm((dftrain$Life.expectancy) ~ Schooling + HIV.AIDS + Adult.Mortality + 
+    Income.composition.of.resources + percentage.expenditure + BMI + Diphtheria + under.five.deaths + infant.deaths + thinness.5.9.years + Total.expenditure + Status+Hepatitis.B, data = dftrain)
+```
+
+```{r}
+modelforward<-lm((dftrain$Life.expectancy) ~ Schooling + Adult.Mortality + HIV.AIDS + Income.composition.of.resources + percentage.expenditure + Diphtheria + BMI + Total.expenditure + under.five.deaths + infant.deaths + thinness.5.9.years + Status+ Hepatitis.B , data = dftrain)
+```
+
+```{r}
+plot(modelforward)
+```
+
+```{r}
+bptest(modelforward,studentize=FALSE)
+qchisq(0.99, 12)
+```
+
+#Bonferroni outlier test
+```{r}
+stud.del.res <- rstudent(modelforward)
+head(stud.del.res)
+a<-0.10
+n<-nrow(dftrain)
+p<-ncol(dftrain)
+stud.del.res[which(stud.del.res>qt(1-a/2/n,n-p-1))==F]
+```
+#Cook's distance
+```{r}
+plot(cooks.distance(modelforward),pch=23, bg='light blue', cex=1, ylab="Cook's distance", main="Cook's Distance")
+```
+
+```{r}
+which(cooks.distance(modelforward)>0.08)
+```
+
+# Check VIF, delete under.five.deaths 
+```{r}
+library(car)
+vif(modelforward)
+```
+
+```{r}
+library(corrplot)
+df3<-df2[,-1]
+colnames(df3)<-c("Status","Life Exp.","Adult Mort.","Infant Death", "Alcohol","Percentage expen","Hep.B","Measles", "BMI","Under five","Polio","Total expen","HIV.AIDS","GDP","Population","Thinness1.19","Thinness5.9","Income composition","Schooling")
+corrplot(cor(df3), method = "number",tl.cex=0.5,number.cex=0.5)
+```
+# after deleting under.five.deaths, new model
+```{r}
+modelforward1<-lm((dftrain$Life.expectancy) ~ Schooling + Adult.Mortality + HIV.AIDS + Income.composition.of.resources + percentage.expenditure + Diphtheria + BMI + Total.expenditure + infant.deaths + thinness.5.9.years + Status+Hepatitis.B , data = dftrain)
+```
+
+```{r}
+summary(modelforward1)
+```
+
+```{r}
+vif(modelforward1)
+```
+
+```{r}
+summary(modelforward1)
+#summary(full)
+```
+# DFFITS
+```{r}
+#dffits(modelfor1)[645]
+dffits(modelforward1)[1119]
+p=ncol(dftrain)
+n=nrow(dftrain)
+2*sqrt(p/n)# DFFITS
+```
+
+```{r}
+x<-cbind(rep(1,nrow(dftest)),dftest[,c("Schooling", "Adult.Mortality" , 
+    "HIV.AIDS" , "Income.composition.of.resources" , "percentage.expenditure" , 
+    "Diphtheria", "BMI" , "Total.expenditure" , "infant.deaths" , "thinness.5.9.years" , 
+    "Status" , "Hepatitis.B")])
+x1<-data.matrix(x)
+residualtest<-as.matrix(modelforward1$coefficients)
+yhat<-x1%*%residualtest
+sum((dftest$Life.expectancy-yhat)^2)
+```
+
+```{r}
+plot((dftest$Life.expectancy-yhat), ylab = "Residuals")
+hist((dftest$Life.expectancy-yhat), main="Histogram of Residuals", xlab="Residuals")
+```
+
