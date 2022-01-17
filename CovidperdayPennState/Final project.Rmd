@@ -1,0 +1,177 @@
+---
+title: "Final project"
+author: "Donglai Xu"
+date: "12/4/2020"
+output: word_document
+---
+
+```{r}
+#dfcovid <- read.table(pipe("pbpaste"), sep="\t", header = TRUE)
+```
+
+#Stratified sampling
+
+```{r}
+boxplot(dfcovid[,3]~dfcovid[,6],xlab="weekdays",ylab="cases")#weekday
+boxplot(dfcovid[,3]~dfcovid[,7],xlab="weeks", ylab="cases")#week
+boxplot(dfcovid[,3]~dfcovid[,8],xlab="months", ylab="cases")#months
+```
+
+```{r}
+month<-c("March","April","May","June","July","August","September","October")
+samplesize<-c(16,18,14,6,12,9,9,28)
+range<-c(1068,1192,950,435,803,585,622,1887)
+data.frame(month,samplesize,range)
+```
+
+```{r}
+df3<-dfcovid[1:31,]
+df4<-dfcovid[32:61,]
+df5<-dfcovid[62:92,]
+df6<-dfcovid[93:122,]
+df7<-dfcovid[123:153,]
+df8<-dfcovid[154:184,]
+df9<-dfcovid[185:214,]
+df10<-dfcovid[215:245,]
+sample3<-df3[sample(31, 16), ]
+sample4<-df4[sample(30, 18), ]
+sample5<-df5[sample(31, 14), ]
+sample6<-df6[sample(30, 6), ]
+sample7<-df7[sample(31, 12), ]
+sample8<-df8[sample(31, 9), ]
+sample9<-df9[sample(30, 9), ]
+sample10<-df10[sample(31, 28), ]
+```
+
+```{r}
+samplestr<-rbind(sample3,sample4,sample5,sample6,sample7,sample8,sample9,sample10)
+```
+
+```{r}
+boxplot(samplestr[,3]~samplestr[,8],xlab="month",ylab="cases")
+```
+
+```{r}
+mean(sample3$New.Cases)
+var(sample3$New.Cases)
+mean(sample4$New.Cases)
+var(sample4$New.Cases)
+mean(sample5$New.Cases)
+var(sample5$New.Cases)
+mean(sample6$New.Cases)
+var(sample6$New.Cases)
+mean(sample7$New.Cases)
+var(sample7$New.Cases)
+mean(sample8$New.Cases)
+var(sample8$New.Cases)
+mean(sample9$New.Cases)
+var(sample9$New.Cases)
+mean(sample10$New.Cases)
+var(sample10$New.Cases)
+```
+
+#Simple random sampling
+```{r}
+#samplesrs<-dfcovid[sample(245,112),]
+```
+
+```{r}
+plot(samplesrs$New.Cases,ylab="New cases per day",main="Plot of sample by SRS")
+```
+
+```{r}
+mean(samplesrs$New.Cases)
+var(samplesrs$New.Cases)
+```
+
+```{r}
+mean_srs<-861.6786
+N_srs<-245
+n_srs<-112
+var_srs<-264287
+data.frame(N_srs,n_srs,mean_srs,var_srs)
+```
+
+
+# repeated systematic sampling
+```{r}
+#num<-sample(14,7)
+```
+
+```{r}
+samplesys1<-dfcovid[c(11,25,39,53,67,81,95,109,123,137,151,165,179,193,207,221,235),]
+samplesys2<-dfcovid[c(3,17,31,45,59,73,87,101,115,129,143,157,171,185,199,213,227,241),]
+samplesys3<-dfcovid[c(6,20,34,48,62,76,90,104,118,132,146,160,174,188,202,216,230,244),]
+samplesys4<-dfcovid[c(12,26,40,54,68,82,96,110,124,138,152,166,180,194,208,222,236),]
+samplesys5<-dfcovid[c(13,27,41,55,69,83,97,111,125,139,153,167,181,195,209,223,237),]
+samplesys6<-dfcovid[c(8,22,36,50,64,78,92,106,120,134,148,162,176,190,204,218,232),]
+samplesys7<-dfcovid[c(1,15,29,43,57,71,85,99,113,127,141,155,169,183,197,211,225,239),]
+```
+
+```{r}
+mean(samplesys1$New.Cases)
+mean(samplesys2$New.Cases)
+mean(samplesys3$New.Cases)
+mean(samplesys4$New.Cases)
+mean(samplesys5$New.Cases)
+mean(samplesys6$New.Cases)
+mean(samplesys7$New.Cases)
+```
+```{r}
+var(c(880.875,700.75,871.75,937.75,892.625,603.5,554.8125))
+```
+```{r}
+samplesys<-rbind(samplesys1,samplesys2,samplesys3,samplesys4,samplesys5,samplesys6,samplesys7)
+plot(samplesys$New.Cases,ylab="New cases per day",main="Plot of sample by repeated systematic sampling")
+```
+
+```{r}
+Repeated.Systematic.Sampling<-c("dataset1","dataset2","dataset3","dataset4","dataset5","dataset6","dataset7")
+Mean<-c(951.235,819.056,1024.667,1011.235,965.353,636.824,646.279)
+Square.of.mean.minus.u<-c(7445.224,2106.258,25509.652,21399.422,10080.826,52041.511,47817.350)
+Sample.size<-c(17,18,18,17,17,17,18)
+data.frame(Repeated.Systematic.Sampling,Mean,Square.of.mean.minus.u,Sample.size)
+```
+
+
+#output datasets to excel
+```{r}
+library(openxlsx)
+write.xlsx(samplestr,file="threedatasets_group3.xlsx", sheetName = "samples of stratified", 
+  col.names = TRUE, row.names = TRUE, append = FALSE)
+write.xlsx(samplesrs,file="threedatasets_group3srs.xlsx", sheetName = "samples of SRS", 
+  col.names = TRUE, row.names = TRUE, append = FALSE)
+write.xlsx(samplesys,file="threedatasets_group3sys.xlsx", sheetName = "samples of systematic", 
+  col.names = TRUE, row.names = TRUE, append = FALSE)
+```
+
+#Systematic sampling
+```{r}
+sysnum=seq(1,245,by=2) 
+```
+
+```{r}
+systematic<-dfcovid[sysnum,]
+```
+
+```{r}
+plot(systematic$New.Cases,ylab="New cases per day",main="Plot of sample by Systematic Sampling")
+```
+
+```{r}
+mean(systematic$New.Cases)
+```
+```{r}
+write.xlsx(systematic,file="newsys.xlsx", sheetName = "samples of systematic", 
+  col.names = TRUE, row.names = TRUE, append = FALSE)
+```
+
+```{r}
+sum_di_square<-8151349
+mean_sys<-844.7236
+N_sys<-245
+n_sys<-123
+data.frame(N_sys,n_sys,mean_sys,sum_di_square)
+```
+
+
