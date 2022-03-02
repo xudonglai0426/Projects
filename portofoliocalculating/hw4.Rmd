@@ -1,0 +1,127 @@
+---
+title: "gr5261hw4"
+author: "Donglai Xu"
+date: "2/23/2022"
+output: word_document
+---
+
+```{r}
+dat = read.csv("Stock_Bond.csv", header = T)
+prices = cbind(dat$GM_AC, dat$F_AC, dat$CAT_AC, dat$UTX_AC,dat$MRK_AC, dat$IBM_AC)
+n = dim(prices)[1]
+returns =  100 * (prices[2:n, ] / prices[1:(n-1), ] - 1)
+pairs(returns)
+mean_vect = colMeans(returns)# mean return for each variable
+cov_mat = cov(returns)# covariance matrix
+sd_vect = sqrt(diag(cov_mat))# standard deviation for each variable
+```
+#1
+```{r}
+library(Ecdat)
+library(quadprog)
+muP = seq(.04,.08,length=400)
+sdP = muP 
+weights = matrix(0,nrow=400,ncol=6)
+Amat <- cbind(rep(1,6), mean_vect, diag(6), -diag(6))
+col_name1=as.vector(c('GM', 'AC', 'CAT','UTX','MRK','IBM'))
+                     
+for (i in 1:length(muP)) { 
+  bvec <- c(1, muP[i], rep(-0.1, 6), rep(-0.5, 6))
+  result = solve.QP(Dmat=2*cov_mat,dvec=rep(0,6),Amat=Amat,bvec=bvec,meq=2) 
+  sdP[i] = sqrt(result$value)
+  weights[i,] = result$solution
+}
+
+mufree = 3/365 
+sharpe =(muP-mufree)/sdP 
+
+ind = (sharpe == max(sharpe)) 
+w_tan=weights[ind,]#the weights of the tangency portfolio
+
+ind2 = (sdP == min(sdP))
+w_min=weights[ind2,]#the weights of minimum variance portfolio
+
+ind3 = (muP > muP[ind2])
+
+plot(sdP, muP, type="l", xlim=c(0, 2.5), ylim=c(0, 0.12), lty=3) #plot all the portfolios
+lines(c(0,2), mufree+c(0,2)*(muP[ind]-mufree)/sdP[ind], lwd=4, lty=1, col='blue')#show line of optimal portfolios
+points(0, mufree, cex=4, pch="*")#show risk-free asset
+points(sdP[ind], muP[ind], cex=4, pch="*") #show tangency portfolio
+points(sdP[ind2], muP[ind2], cex=2, pch="+") #show min var portfolio
+lines(sdP[ind3], muP[ind3], type="l", xlim=c(0,.25), ylim=c(0,.3), lwd=2, col='red') #plot the efficient frontier
+
+text(sd_vect[1], mean_vect[1], 'GE', cex=1.15)
+text(sd_vect[2], mean_vect[2], 'F', cex=1.15)
+text(sd_vect[3], mean_vect[3], 'CAT', cex=1.15)
+text(sd_vect[4], mean_vect[4], 'UTX', cex=1.15)
+text(sd_vect[5], mean_vect[5], 'MRK', cex=1.15)
+text(sd_vect[6], mean_vect[6], 'IBM', cex=1.15)
+
+cat("Tangency portfolio: \n")
+rbind(setNames(round(w_tan,5),col_name1))#the weights of the tangency portfolio
+cat("Minimum variance portfolio: \n")
+rbind(setNames(round(w_min,5),col_name1))#the weights of minimum variance portfolio
+```
+#1(2)
+```{r}
+mu_tan=weights[ind,]%*%mean_vect#expected value of tangency portfolio
+muf_per=(0.07-mu_tan)/(mufree-mu_tan)
+mu_tan_per=c(1-muf_per)*weights[ind,]
+col_name=as.vector(c('GM', 'AC', 'CAT','UTX','MRK','IBM','Risk Free'))
+print(rbind(setNames(c(round(mu_tan_per,4),round(muf_per,4)),col_name)))
+```
+
+#1(3)
+```{r}
+# Yes, it includes Black Monday, there is one point in each plot of stocks that fall under around -20, which is far from most of the stocks price.
+```
+
+#3
+#(a)
+```{r}
+A=matrix(c(0.02,0.0036,0.0022,1,
+           0.0036,0.2088*0.1044,0.0052,1,
+           0.0022,0.0052,0.2822*0.1411,1,
+           1,1,1,0),nrow=4,ncol=4,byrow=TRUE)
+b.vec = c(rep(0, 3), 1)
+z.m.mat=solve(A)%*%b.vec
+m.vec = z.m.mat[1:3,1]
+m.vec
+```
+
+#(b)
+```{r}
+A1=matrix(c(0.02,0.0036,0.0022,0.0427,1,
+           0.0036,0.2088*0.1044,0.0052,0.0015,1,
+           0.0022,0.0052,0.2822*0.1411,0.0285,1,
+           0.0427,0.0015,0.0285,0,0,
+           1,1,1,0,0),nrow=5,ncol=5,byrow=TRUE)
+b.vec1 = c(rep(0, 3), 0.0427,1)
+z.m.mat1=solve(A1)%*%b.vec1
+m.vec1 = z.m.mat1[1:3,1]
+m.vec1
+```
+#(c)
+```{r}
+rf=0.0001#risk free rate
+mu.vec=c(0.0427,0.0015,0.0285)#mean return of three assets
+sigma=matrix(c(0.01,0.0018,0.0011,
+           0.0018,0.1044*0.1044,0.0026,
+           0.0011,0.0026,0.1411*0.1411),nrow=3,ncol=3,byrow=TRUE)#correlation matrix
+sigma.inv=solve(sigma)
+mu.minus.rf=mu.vec-rf*rep(1,3)
+top.mat=sigma.inv%*%mu.minus.rf
+bot.val=as.numeric(t(rep(1,3))%*%top.mat)
+t.vec=top.mat[,1]/bot.val
+t.vec
+```
+#(d)
+```{r}
+w.t=(0.0427-0.0001)/(t.vec%*%mu.vec-0.0001)#weight of tangency portfolio
+w.t
+w.f=1-w.t#weight of risk free
+w.f
+w.t.1=as.vector(w.t)*t.vec#weight of risky asset in tangency portfolio
+risk=w.t.1%*%sigma%*%(w.t.1)
+risk[1]
+```
