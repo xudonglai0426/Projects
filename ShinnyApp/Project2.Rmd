@@ -1,0 +1,93 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r,echo = FALSE, message=FALSE, warning= FALSE}
+library(dplyr)
+library(ggplot2)
+library(stringr)
+```
+
+#Daily number of people admitted to nyc hospital for Covid 19
+```{r}
+df_daily_hospital=read.csv("DOHMH_Covid-19_Milestone_Data__Daily_Number_of_People_Admitted_to_NYC_hospitals_for_Covid-19_like_Illness.csv")
+df_newcase_7dayavg=read.csv("DOHMH_Covid-19_Milestone_Data__New_Cases_of_Covid-19__7_Day_Average_.csv")
+df_percent_of_resid_testposi=read.csv("DOHMH_Covid-19_Milestone_Data__Percent_of_NYC_residents_tested_who_tested_positive.csv")
+df_daily_case=read.csv("COVID-19_Daily_Counts_of_Cases__Hospitalizations__and_Deaths.csv")
+```
+
+#convert date to date format 
+```{r}
+for (i in 1:nrow(df_daily_hospital)){
+  df_daily_hospital[i,"date"]=str_split(df_daily_hospital$date," ")[[i]][1]
+}
+for (i in 1:nrow(df_newcase_7dayavg)){
+  df_newcase_7dayavg[i,"date"]=str_split(df_newcase_7dayavg$date," ")[[i]][1]
+}
+for (i in 1:nrow(df_percent_of_resid_testposi)){
+  df_percent_of_resid_testposi[i,"date"]=str_split(df_percent_of_resid_testposi$date," ")[[i]][1]
+}
+```
+
+```{r}
+df_daily_hospital$date<-as.Date(df_daily_hospital$date,"%m/%d/%Y")
+df_newcase_7dayavg$date<-as.Date(df_newcase_7dayavg$date,"%m/%d/%Y")
+df_percent_of_resid_testposi$date<-as.Date(df_percent_of_resid_testposi$date,"%m/%d/%Y")
+df_daily_case$date_of_interest<-as.Date(df_daily_case$date_of_interest,"%m/%d/%Y")
+```
+
+```{r}
+df_daily_hospital%>%
+  ggplot(data=.,aes(x=date, y=ili_pne_admit))+
+  geom_bar(stat="identity",fill="#6baed6")+
+  theme(axis.text.x = element_text(angle=45,hjust=1), plot.title = element_text(hjust = 0.5))+
+  labs(title = "Number of people admitted to hospital")+
+  ylab("Number of people")+
+  scale_x_date(date_breaks = "1 month", date_labels =  "%b %Y") 
+```
+
+```{r}
+df_newcase_7dayavg%>%
+  ggplot(data=.,aes(x=date, y=Confirmed_Cases))+
+  geom_bar(stat="identity",fill="#6baed6")+
+  theme(axis.text.x = element_text(angle=45,hjust=1), plot.title = element_text(hjust = 0.5))+
+  labs(title = "Number of people test postive")+
+  ylab("Number of people")+
+  scale_x_date(date_breaks = "1 month", date_labels =  "%b %Y") 
+```
+
+```{r}
+df_percent_of_resid_testposi%>%
+  ggplot(data=.,aes(x=date, y=percent_positive))+
+  geom_bar(stat="identity",fill="#6baed6")+
+  theme(axis.text.x = element_text(angle=45,hjust=1), plot.title = element_text(hjust = 0.5))+
+  labs(title = "Percentage of people test postive")+
+  ylab("Number of people")+
+  scale_x_date(date_breaks = "1 month", date_labels =  "%b %Y") 
+```
+The df_daily_case dataset
+```{r}
+df_daily_case%>%
+  filter(between(date_of_interest,as.Date('2020-03-01'),as.Date('2022-07-31')))%>%
+  ggplot(data=.,aes(x=date_of_interest, y=CASE_COUNT))+
+  geom_bar(stat="identity",fill="#6baed6")+
+  theme(axis.text.x = element_text(angle=45,hjust=1), plot.title = element_text(hjust = 0.5))+
+  labs(title = "People tested positive")+
+  ylab("Number of people")+
+  scale_x_date(date_breaks = "1 month", date_labels =  "%b %Y")
+```
+
+```{r}
+df_daily_case%>%
+  ggplot(data=.,aes(x=date_of_interest, y=DEATH_COUNT))+
+  geom_bar(stat="identity",fill="#6baed6")+
+  theme(axis.text.x = element_text(angle=45,hjust=1), plot.title = element_text(hjust = 0.5))+
+  labs(title = "Death Count")+
+  ylab("Number of people")+
+  scale_x_date(date_breaks = "1 month", date_labels =  "%b %Y")
+```
+
+
+
+
+
